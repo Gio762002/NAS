@@ -1,9 +1,7 @@
 {
     "AS": [
         {
-            "number": "123",
-            "IP_range": "2001:100::/64",
-            "loopback_range": "2001:500::",
+            "number": "1",
             "protocol": "OSPF",
             "routers": [
                 {
@@ -118,9 +116,7 @@
         },
 
         {
-            "number": "10",
-            "IP_range": "2001:200::/64",
-            "loopback_range": "2001:600::",
+            "number": "2",
             "protocol": "",
             "routers": [
                 {
@@ -154,9 +150,7 @@
         },
 
         {
-            "number": "20",
-            "IP_range": "2001:300::/64",
-            "loopback_range": "2001:700::",
+            "number": "3",
             "protocol": "",
             "routers": [
                 {
@@ -190,9 +184,7 @@
         },
 
         {
-            "number": "30",
-            "IP_range": "2001:400::/64",
-            "loopback_range": "2001:800::",
+            "number": "4",
             "protocol": "",
             "routers": [
                 {
@@ -226,9 +218,7 @@
         },
 
         {
-            "number": "40",
-            "IP_range": "2001:500::/64",
-            "loopback_range": "2001:900::",
+            "number": "5",
             "protocol": "",
             "routers": [
                 {
