@@ -52,7 +52,7 @@ def as_local_links(dict_as):
             #     interface2.egp_protocol_type = "eBGP"
 
 def as_auto_addressing_for_link(dict_as):
-    """distribution of ipv6 addresses for an As, based on the links the routers in the As have"""
+    """distribution of ipv4 addresses for an As, based on the links the routers in the As have"""
     for As in dict_as.values(): 
         if As.as_id == "1": # AS of the core
             network = "102.168."
