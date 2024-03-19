@@ -5,137 +5,185 @@ whatever the order of calls of the functions.
 """
 
 
+                            
 
 def as_enable_ospf(As,reg):
     """Implement OSPF for all routers in the As"""
-    process_id = 2 #different from RIP
-    order = 2
+    process_id = 100
+    order = 1 # TODO check if it is the right order
     for router in As.routers.values():
-        reg.write(router.name, order, "ipv6 router ospf " + str(process_id))
+        reg.write(router.name, order, "router ospf " + str(process_id))
         reg.write(router.name, order, " router-id " + router.router_id)
         reg.write(router.name, order, " log-adjacency-changes")
-        for interface in router.interfaces.values(): 
-            if interface.egp_protocol_type == "eBGP":             
-                reg.write(router.name, order," passive-interface " + interface.name)
-        reg.write(router.name, order, " !")
-        
+        reg.write(router.name, order, " network " + str(router.loopback) + "0.0.0.0 area 0")
         for interface in router.interfaces.values():
-            if interface.igp_protocol_type == "RIP":
-                raise Exception("RIP and OSPF cannot be enabled at the same time")
-            if interface.statu == "up":
-                interface.igp_protocol_type = "OSPF"
-                interface.protocol_process = process_id      
-                reg.write(router.name, interface.name, "ipv6 enable")
-                reg.write(router.name, interface.name, "ipv6 ospf " + str(process_id) + " area 0")
-        reg.write(router.name, "Loopback0", "ipv6 ospf " + str(process_id) + " area 0")
+            if interface.statu == "up" and interface.egp_protocol_type != "eBGP":
+                reg.write(router.name, order, " network " + str(interface.address_ipv4) + "0.0.0.3 area 0")
+#  router ospf 100
+#  router-id 1.1.1.1
+#  log-adjacency-changes
+#  network 1.1.1.1 0.0.0.0 area 0
+#  network 10.0.0.1 0.0.0.0 area 0
+# !
 
          
-def generate_eBGP_neighbor_info(dict_as):
-    '''
-    For all ABR in all as, mark their ebgp interface and find the info of its connected int.
-    RETURN: {(as,router,ABR_interface,@int,community):(as,router_id,ABR_interface,@int,community)}
-    '''   
-    neighbor_info = {}
-    #this part generates a dict of all router objects, which to be used to get easily the router object by its id
-    #if this part will be used frequently, it is better to put it in a separate function
-    dict_routers = {}
-    for As in dict_as.values():
-        for router_id,router in As.routers.items():
-            dict_routers[router_id] = router
+# def generate_eBGP_neighbor_info(dict_as):
+#     '''
+#     For all ABR in all as, mark their ebgp interface and find the info of its connected int.
+#     RETURN: {(as,router,ABR_interface,@int,community):(as,router_id,ABR_interface,@int,community)}
+#     '''   
+#     neighbor_info = {}
+#     #this part generates a dict of all router objects, which to be used to get easily the router object by its id
+#     #if this part will be used frequently, it is better to put it in a separate function
+#     dict_routers = {}
+#     for As in dict_as.values():
+#         for router_id,router in As.routers.items():
+#             dict_routers[router_id] = router
     
-    for As in dict_as.values():
-        for (r1,int1),(r2,int2) in As.link_dict.items():
-            if As.routers.get(r1) == None or As.routers.get(r2) == None: #means interconnection with other AS
-                if dict_routers[r1].position != dict_routers[r2].position:
+#     for As in dict_as.values():
+#         for (r1,int1),(r2,int2) in As.link_dict.items():
+#             if As.routers.get(r1) == None or As.routers.get(r2) == None: #means interconnection with other AS
+#                 if dict_routers[r1].position != dict_routers[r2].position:
                     
-                    ABR_int_address1 = dict_routers[r1].interfaces.get(int1).address_ipv6_global
-                    ABR_int_address2 = dict_routers[r2].interfaces.get(int2).address_ipv6_global
-                    serve1 = dict_routers[r1].interfaces.get(int1).serve
-                    serve2 = dict_routers[r2].interfaces.get(int2).serve
+#                     ABR_int_address1 = dict_routers[r1].interfaces.get(int1).address_ipv6_global
+#                     ABR_int_address2 = dict_routers[r2].interfaces.get(int2).address_ipv6_global
+#                     serve1 = dict_routers[r1].interfaces.get(int1).serve
+#                     serve2 = dict_routers[r2].interfaces.get(int2).serve
                     
-                    neighbor_info[(dict_routers[r1].position, r1, int1, ABR_int_address1, serve1)] = (dict_routers[r2].position, r2, int2, ABR_int_address2, serve2)
-                    neighbor_info[(dict_routers[r2].position, r2, int2, ABR_int_address2, serve2)] = (dict_routers[r1].position, r1, int1, ABR_int_address1, serve1)
-    return neighbor_info
+#                     neighbor_info[(dict_routers[r1].position, r1, int1, ABR_int_address1, serve1)] = (dict_routers[r2].position, r2, int2, ABR_int_address2, serve2)
+#                     neighbor_info[(dict_routers[r2].position, r2, int2, ABR_int_address2, serve2)] = (dict_routers[r1].position, r1, int1, ABR_int_address1, serve1)
+#     return neighbor_info
 
    
-def find_eBGP_neighbor_info(r,int,neighbor_info): #int(str) = interface.name
-    '''
-    For one particular ABR, find the info of its ebgp interface. RETURN: (As,router,ABR_interface,@int,community)
-    '''  
-    for key,value in neighbor_info.items():
-        if key[1] == r and key[2]==int:
-            return value
-    return('not found')
+# def find_eBGP_neighbor_info(r,int,neighbor_info): #int(str) = interface.name
+#     '''
+#     For one particular ABR, find the info of its ebgp interface. RETURN: (As,router,ABR_interface,@int,community)
+#     '''  
+#     for key,value in neighbor_info.items():
+#         if key[1] == r and key[2]==int:
+#             return value
+#     return('not found')
 
-def find_As_neighbor(As,dict_as):
-    """find all the As neighbors of an As from its link_dict. RETURN: {r.id : [(As.community, As.community_number),..]}"""
-    As_neighbor = {}
-    for (r1,_),(r2,_) in As.link_dict.items(): # find router r2, that is not in the As but connected to it
-        if r2 not in As.routers.keys():
-            if As_neighbor.get(r1) is None:
-                As_neighbor[r1] = []
-            for As2 in dict_as.values():
-                if r2 in As2.routers.keys(): # find the As where the router is located
-                    As_neighbor[r1].append((As2.community, As2.community_number))
-        elif r1 not in As.routers.keys():
-            if As_neighbor.get(r2) is None:
-                As_neighbor[r2] = []
-            for As2 in dict_as.values():
-                if r1 in As2.routers.keys():
-                    As_neighbor[r2].append((As2.community, As2.community_number))
-    if len(As_neighbor) == 0:
-        raise Exception("No As neighbor found, the As is isolated")
-    return As_neighbor
+# def find_As_neighbor(As,dict_as):
+#     """find all the As neighbors of an As from its link_dict. RETURN: {r.id : [(As.community, As.community_number),..]}"""
+#     As_neighbor = {}
+#     for (r1,_),(r2,_) in As.link_dict.items(): # find router r2, that is not in the As but connected to it
+#         if r2 not in As.routers.keys():
+#             if As_neighbor.get(r1) is None:
+#                 As_neighbor[r1] = []
+#             for As2 in dict_as.values():
+#                 if r2 in As2.routers.keys(): # find the As where the router is located
+#                     As_neighbor[r1].append((As2.community, As2.community_number))
+#         elif r1 not in As.routers.keys():
+#             if As_neighbor.get(r2) is None:
+#                 As_neighbor[r2] = []
+#             for As2 in dict_as.values():
+#                 if r1 in As2.routers.keys():
+#                     As_neighbor[r2].append((As2.community, As2.community_number))
+#     if len(As_neighbor) == 0:
+#         raise Exception("No As neighbor found, the As is isolated")
+#     return As_neighbor
+
+def find_CE_PE_link(dict_as):
+    CE_PE_link = {}
+    for router in dict_as["as1"]: # as1 is the core
+        if router.type == "PE":
+            for interface in router.interfaces.values():
+                if interface.egp_protocol_type == "eBGP":
+                    ce_id = interface.connected_router
+                    ce_int = interface.connected_interface
+                    for As in dict_as.values():
+                        if ce_id in As.routers.keys():
+                            CE = As.routers[ce_id]
+                            for int in CE.interfaces.values():
+                                if int.name == ce_int:
+                                    CE_PE_link[(router.router_id,
+                                                interface.address_ipv4)] = (ce_id, CE.type , int.address_ipv4)
+    return CE_PE_link
+
+#cepelink the result of find_CE_PE_link
+def enable_vrf(As, cepelink, reg): #As should only be the core
+    for router in As.routers.values():
+        if router.type == "PE":
+            for (pe_id,_), (ce_id, ce_type, _) in cepelink.items():
+                reg.write(router.name, 1, "ip vrf " + ce_type)
+                reg.write(router.name, 1, " rd " + str(ce_id) + ":" + str(pe_id))
+                reg.write(router.name, 1, " route-target export " + str(ce_id) + ":" + str(pe_id))
+                reg.write(router.name, 1, " route-target import " + str(ce_id) + ":" + str(pe_id))
+                reg.write(router.name, 1, "!")
+# ip vrf orange
+#  rd 123:1
+#  route-target export 123:1
+#  route-target import 123:2
+# !
+#TODO verify the route-target import and export
+
+
 
 def as_enable_BGP(dict_as, neighbor_info, reg):
     """
     Implement BGP for all As
-    "a","b","c" etc mean the secondary order of writing, this mechanism is particularly designed for BGP, 
-    without that, we would have to write 6 loop of only 2 types(interfaces and loopback0)
     """
-    order = 1
+    order = 2
+    PEs = []
+    #TODO for CE
     for As in dict_as.values():
         for router in As.routers.values():
-            def add_exlam(second=None): # add exclamation mark to separate the different parts of the configuration
-                if second == None:
-                    return reg.write(router.name, order, "!")
-                else:
-                    return reg.write(router.name, order, "!",second)
-        
-            reg.write(router.name, order, "router bgp " + str(As.as_id),"a")
-            reg.write(router.name, order, " bgp router-id " + router.router_id,"a")
-            reg.write(router.name, order, " no bgp default ipv4-unicast","a")
-            reg.write(router.name, order, " bgp log-neighbor-changes","a")
-            reg.write(router.name, order, " !","d")
-            reg.write(router.name, order, " address-family ipv6","d")
-
-            for loopback in As.loopback_plan.values():
-                if loopback != router.loopback:
-                    reg.write(router.name, order, " neighbor " + str(loopback)[:-4] + " remote-as " + str(router.position),"b") 
-                    reg.write(router.name, order, " neighbor " + str(loopback)[:-4] + " update-source loopback0","b")
-
-                    reg.write(router.name, order, "  neighbor " + str(loopback)[:-4] + " activate","f") 
-                    reg.write(router.name, order, "  neighbor " + str(loopback)[:-4] + " send-community","f")                 
+            if router.type == "PE":
+                PEs.append([router.name, router.router_id])
+        for [name,id] in PEs:
+            reg.write(name, order, "router bgp " + str(As.as_id))
+            reg.write(name, order, "bgp router-id " + id)
+            reg.write(name, order, "no bgp default ipv4-unicast")
+            reg.write(name, order, "bgp log-neighbor-changes")
+            for [_,id] in PEs:
+                if id != router.router_id:
+                    loopback = id # we defined loopback as router_id
+                    reg.write(name, order, "neighbor " + loopback + " remote-as " + str(As.as_id))
+                    reg.write(name, order, "neighbor " + loopback + " update-source Loopback0")
+                    reg.write(name, order, "!")
+                    reg.write(name, order, "address-family vpnv4")
+                    reg.write(name, order, "neighbor " + loopback + " activate")
+                    reg.write(name, order, "neighbor " + loopback + " send-community extended")
+                    reg.write(name, order, "exit-address-family")
+                    reg.write(name, order, "!")
             
-            for interface in router.interfaces.values():
-                if interface.egp_protocol_type == "eBGP":
-                    (rm_as,_,_,ABR_int_address,_) = find_eBGP_neighbor_info(router.router_id,interface.name,neighbor_info) 
-                    reg.write(router.name, order, " neighbor " + ABR_int_address + " remote-as " + str(rm_as),"c")
-                    reg.write(router.name, order, "  neighbor " + ABR_int_address + " activate","e")
-                if interface.statu == "up": 
-                    reg.write(router.name, order,  "  network " + str(interface.address_ipv6_global) + str('/64'),"h")
-            
-            reg.write(router.name, order, " exit-address-family","j")
-            add_exlam("j")
-            reg.write(router.name, order, "ip forward-protocol nd","j")
-            reg.write(router.name, order, "no ip http server","j")
-            reg.write(router.name, order, "no ip http secure-server","j")
-            add_exlam("j") #"k" is waiting for "ip community-list standard "
-            add_exlam("l")
-            reg.write(router.name, order, "logging alarm informational","l")
-            reg.write(router.name, order, "no cdp log mismatch duplex","l")
+#  router bgp 123
+#  bgp router-id 1.1.1.1
+#  no bgp default ipv4-unicast
+#  bgp log-neighbor-changes
+#  neighbor 4.4.4.4 remote-as 123
+#  neighbor 4.4.4.4 update-source Loopback0
+#  !
+#  address-family vpnv4
+#   neighbor 4.4.4.4 activate
+#   neighbor 4.4.4.4 send-community extended
+#  exit-address-family
+#  !            
+
+#TODO VRF
+#   address-family ipv4 vrf sfr
+#   neighbor 10.1.12.2 remote-as 20
+#   neighbor 10.1.12.2 activate
+#   neighbor 10.1.12.2 as-override
+#   no synchronization
+#  exit-address-family
+#  !
+#  address-family ipv4 vrf orange
+#   neighbor 10.0.12.2 remote-as 10
+#   neighbor 10.0.12.2 activate
+#   neighbor 10.0.12.2 as-override
+#   no synchronization
+#  exit-address-family
+# !
 
 
+
+
+
+
+
+#TODO
 '''
 functions particularly related to complete the configuration
 '''
@@ -162,5 +210,3 @@ def as_config_unused_interface_and_loopback0(dict_as,reg): #dont call this funct
                     reg.write(router.name, interface.name, "no ipv6 address")
                     reg.write(router.name, interface.name, "shutdown")
                     reg.write(router.name, interface.name, "negotiation auto")
-
-

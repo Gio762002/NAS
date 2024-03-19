@@ -47,9 +47,9 @@ def as_local_links(dict_as):
             connect_routers(router1, interface1, router2, interface2)
             connect_routers(router2, interface2, router1, interface1)
             
-            # if router1.position != router2.position:
-            #     interface1.egp_protocol_type = "eBGP"
-            #     interface2.egp_protocol_type = "eBGP"
+            if router1.position != router2.position:
+                interface1.egp_protocol_type = "eBGP" # which indicate its a CE-PE link
+                interface2.egp_protocol_type = "eBGP"
 
 def as_auto_addressing_for_link(dict_as):
     """distribution of ipv4 addresses for an As, based on the links the routers in the As have"""

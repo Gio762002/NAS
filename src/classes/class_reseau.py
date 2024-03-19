@@ -8,14 +8,14 @@ as a human would do. A man keeps in mind the information he needs, and the progr
 
 class router:
    
-    def __init__(self,name,type="Internal"):
+    def __init__(self,name,type):
         self.name = name
         self.router_id = None #1.1.1.1
         self.loopback = self.router_id
         self.all_interfaces = {"Loopback0":1} #interface.name : occupied? (1 or 0)
         self.interfaces = {} #interface.name: interface (instance)
         self.neighbors = [] #router_id, extrait de self.interface
-        self.type = type # ABR, Internal 
+        self.type = type # PE, P, company name
         self.position = None # name of the AS where the router is located, to be tracked for any modification 
 
     def get_router_id(self):
@@ -32,20 +32,20 @@ class interface:
         self.connected_router = None # router_id
         self.connected_interface = None # interface.name
         # self.igp_protocol_type = igp_protocol_type
-        # self.egp_protocol_type = None
-        self.protocol_process = None 
+        self.egp_protocol_type = None
+        # self.protocol_process = None 
 
 
 class autonomous_system:
 
-    def __init__(self, as_id, loopback_range, ip_range, igp):
+    def __init__(self, as_id):
         self.as_id = as_id
-        self.loopback_range = loopback_range
+        # self.loopback_range = loopback_range
         # self.ip_range = ip_range
         self.routers = {} # router_id : router (instance)
         self.link_dict = {} #(router_id,interface.name):(router_id,interface.name)
         self.loopback_plan = {} # router_id : loopback
-        self.igp = igp # OSPF or RIP
+        # self.igp = igp # OSPF or RIP
         self.egp = "BGP"
 # #TODO
 #     def auto_loopback(self):
