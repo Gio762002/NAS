@@ -57,7 +57,7 @@ for json_as in network_intent['AS']: # json_as is a dict
 
             reg.add_entry(router_instance.name,interface_instance.name) #add entry to the register of its router
     
-    as_instance.auto_loopback()
+    # as_instance.auto_loopback()
     as_instance.generate_loopback_plan()
 
 fctr.as_local_links(as_dict)

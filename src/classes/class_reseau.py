@@ -10,8 +10,8 @@ class router:
    
     def __init__(self,name,type="Internal"):
         self.name = name
-        self.router_id = None
-        self.loopback = None
+        self.router_id = None #1.1.1.1
+        self.loopback = self.router_id
         self.all_interfaces = {"Loopback0":1} #interface.name : occupied? (1 or 0)
         self.interfaces = {} #interface.name: interface (instance)
         self.neighbors = [] #router_id, extrait de self.interface
@@ -24,36 +24,33 @@ class router:
 
 class interface:
     
-    def __init__(self,name,igp_protocol_type=None):
+    def __init__(self,name):
         self.name = name # !!! can be the same with other interfaces of other routers
         self.statu = "down" # up or down
-        self.address_ipv6_global = None
-        self.netmask = None
+        self.address_ipv4 = None
+        # self.netmask = None
         self.connected_router = None # router_id
         self.connected_interface = None # interface.name
-        self.igp_protocol_type = igp_protocol_type
-        self.egp_protocol_type = None
-        self.serve = None # ==community of As where its router is placed, makes the life easier.   
+        # self.igp_protocol_type = igp_protocol_type
+        # self.egp_protocol_type = None
         self.protocol_process = None 
 
 
 class autonomous_system:
 
-    def __init__(self, as_id, loopback_range, ip_range, igp, community, community_number):
+    def __init__(self, as_id, loopback_range, ip_range, igp):
         self.as_id = as_id
         self.loopback_range = loopback_range
-        self.ip_range = ip_range
-        self.community = community # "customer", "provider", "settlement-free peer"
-        self.community_number = community_number
+        # self.ip_range = ip_range
         self.routers = {} # router_id : router (instance)
         self.link_dict = {} #(router_id,interface.name):(router_id,interface.name)
         self.loopback_plan = {} # router_id : loopback
         self.igp = igp # OSPF or RIP
         self.egp = "BGP"
-
-    def auto_loopback(self):
-        for router_id,router in self.routers.items():
-            router.loopback = self.loopback_range[:-1] + str(self.as_id) + ":" + (str(router_id).split('.'))[0] + "::1/128"
+# #TODO
+#     def auto_loopback(self):
+#         for router_id,router in self.routers.items():
+#             router.loopback = self.loopback_range[:-1] + str(self.as_id) + ":" + (str(router_id).split('.'))[0] + "::1/128"
 
     def generate_loopback_plan(self):
         for router_id,router in self.routers.items():
