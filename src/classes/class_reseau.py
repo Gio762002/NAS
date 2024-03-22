@@ -12,6 +12,7 @@ class router:
         self.name = name
         self.router_id = None #1.1.1.1
         self.loopback = self.router_id
+        self.private_network = None
         self.all_interfaces = {"Loopback0":1} #interface.name : occupied? (1 or 0)
         self.interfaces = {} #interface.name: interface (instance)
         self.neighbors = [] #router_id, extrait de self.interface

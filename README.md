@@ -6,9 +6,9 @@ https://github.com/Gio762002/PROJET-GNS.git
 - change OSPFv3 to OSPFv2 ok
 - remove RIP ok
 - adapt BGP ~
-- change intent
+- change intent ok
 
 
 ### TODO: new features 
-- VRF ~
+- VRF ok
 - more for NAS
