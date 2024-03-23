@@ -9,7 +9,7 @@ class registrar():
         self.path = path
     def create_register(self, name):
         self.general_register[name] = {0:[],
-                                       1:{"a":[],"b":[],"c":[],"c":[],"d":[],"e":[],"f":[],"g":[],"h":[],"i":[],"j":[],"k":[],"l":[]},
+                                       1:[],
                                        2:[],
                                        3:[],
                                        4:{"in":[],"out":[]},

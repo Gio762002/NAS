@@ -22,3 +22,8 @@ def show_as_loopback_plan(As):
     for router in As.routers.values():
         print(router.router_id,":",router.loopback)
     print("")
+
+def show_as_link(As):
+    for ((r1, i1),(r2, i2)) in As.link_dict.items():
+        print(r1,":",i1,"<->",r2,":",i2)
+    print("")

@@ -86,7 +86,7 @@ def as_enable_ospf(As,reg):
 
 def find_CE_PE_link(dict_as):
     CE_PE_link = {}
-    for router in dict_as["as1"]: # as1 is the core
+    for router in dict_as["as1"].routers.values(): # as1 is the core
         if router.type == "PE":
             for interface in router.interfaces.values():
                 if interface.egp_protocol_type == "eBGP":
@@ -107,10 +107,11 @@ def as_add_vrf(As, cepelink, reg): #As should only be the core
         if router.type == "PE":
             router.vrf = {}
             router.vrf_route_target = {}
-            for (ce_type, ce_address, as_id ) in cepelink.values():
-                router.vrf[ce_type].append([ce_address, as_id])
+            for (_,ce_type, ce_address, as_id ) in cepelink.values():
+                router.vrf_route_target[ce_type]=[ce_address, as_id]
                 if ce_type not in router.vrf.keys():
                     router.vrf[ce_type] = f"100:1{len(router.vrf)+1}0" # 100:1x0
+                    print(router.vrf[ce_type])
                     reg.write(router.name, 1, "ip vrf " + ce_type)
                     reg.write(router.name, 1, " rd " + router.vrf[ce_type])
                     reg.write(router.name, 1, " route-target export " + router.vrf[ce_type] + ":" + str(1000*len(router.vrf))) # 100:x000 
@@ -120,16 +121,17 @@ def as_add_vrf(As, cepelink, reg): #As should only be the core
 #  rd 123:1
 #  route-target export 123:1
 #  route-target import 123:2
-# !
+# !         
+            print(router.vrf_route_target)
             for vrf in router.vrf_route_target.keys():
                 reg.write(router.name, 3, "address-family ipv4 vrf " + vrf)
-                for [ce_address, as_id] in router.vrf[vrf]:
-                    reg.write(router.name, 3, " neighbor " + ce_address + " remote-as " + as_id)
-                    reg.write(router.name, 3, " neighbor " + ce_address + " activate")
-                    reg.write(router.name, 3, " neighbor " + ce_address + " as-override")
-                    reg.write(router.name, 3, " no synchronization")
-                    reg.write(router.name, 3, "exit-address-family")
-                    reg.write(router.name, 3, "!")
+                ce_address, as_id = router.vrf_route_target[vrf]
+                reg.write(router.name, 3, " neighbor " + ce_address + " remote-as " + as_id)
+                reg.write(router.name, 3, " neighbor " + ce_address + " activate")
+                reg.write(router.name, 3, " neighbor " + ce_address + " as-override")
+                reg.write(router.name, 3, " no synchronization")
+                reg.write(router.name, 3, "exit-address-family")
+                reg.write(router.name, 3, "!")
 #   address-family ipv4 vrf sfr
 #   neighbor 10.1.12.2 remote-as 20
 #   neighbor 10.1.12.2 activate
@@ -157,13 +159,14 @@ def as_enable_BGP(dict_as, cepelink, reg):
         for router in As.routers.values():
             if router.type == "PE":
                 PEs.append([router.name, router.router_id])
+        
             elif router.type != "P":
                 reg.write(router.name, order, "router bgp 100")
                 reg.write(router.name, order, " no synchronization")
                 reg.write(router.name, order, " bgp router-id " + router.router_id)
                 reg.write(router.name, order, " bgp log-neighbor-changes")
                 reg.write(router.name, order, " network " + str(router.loopback) + " mask 255.255.255.255")
-                reg.write(router.name, order, " network " + router.private_network)
+                # reg.write(router.name, order, " network " + router.private_network) #TODO private network
                 for [(pe_id, pe_address),(ce_id, _, _, _)] in cepelink.items():
                     if ce_id == router.router_id:
                         reg.write(router.name, order, " neighbor " + pe_address + " remote-as 1") # 1 is the core
@@ -211,7 +214,7 @@ def as_enable_BGP(dict_as, cepelink, reg):
 '''
 functions particularly related to complete the configuration
 '''
-def as_config_interfaces(dict_as,reg,cepelink):
+def as_config_interfaces(dict_as, cepelink, reg):
     """default config of interfaces of all routers in all As"""
     for As in dict_as.values():
         for router in As.routers.values():
@@ -225,7 +228,7 @@ def as_config_interfaces(dict_as,reg,cepelink):
                     reg.write(router.name,interface.name,"duplex auto")
                     reg.write(router.name,interface.name,"spped auto")
                     reg.write(router.name,interface.name,"media-type gbic")
-                    if router.type == "P" | (router.type=="PE" & interface.egp_protocol_type == "eBGP"):
+                    if router.type == "P" or (router.type=="PE" and interface.egp_protocol_type == "eBGP"):
                         reg.write(router.name,interface.name,"mpls ip")
 
 def as_config_unused_interface_and_loopback0(dict_as,reg): #dont call this function if you want to use telnet

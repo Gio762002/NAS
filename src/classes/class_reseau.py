@@ -11,7 +11,7 @@ class router:
     def __init__(self,name,type):
         self.name = name
         self.router_id = None #1.1.1.1
-        self.loopback = self.router_id
+        self.loopback = None
         self.private_network = None
         self.all_interfaces = {"Loopback0":1} #interface.name : occupied? (1 or 0)
         self.interfaces = {} #interface.name: interface (instance)
@@ -21,7 +21,8 @@ class router:
 
     def get_router_id(self):
         self.router_id = ((self.name[1:]+".")*4)[:-1]
-
+    def get_loopback(self):
+        self.loopback = self.router_id
 
 class interface:
     

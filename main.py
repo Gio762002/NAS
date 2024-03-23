@@ -28,18 +28,14 @@ as_dict = {}
 """read the intent file, 'simulate' its topologie"""
 for json_as in network_intent['AS']: # json_as is a dict
     as_name = f"as{json_as['number']}"
-    as_instance = classr.autonomous_system(json_as['number'], 
-                                           json_as['loopback_range'],
-                                           json_as['IP_range'],
-                                           json_as['protocol'], 
-                                           json_as['community'], 
-                                           json_as['community_number'])
+    as_instance = classr.autonomous_system(json_as['number'])
     as_dict[as_name] = as_instance
 
     for json_router in json_as['routers']: # json_router is a dict
         router_name = json_router['name']
         router_instance = classr.router(router_name, json_router['type'])
         router_instance.get_router_id()
+        router_instance.get_loopback()
         fctr.add_router_to_as(router_instance,as_instance) # bind to as
         
         reg.create_register(router_instance.name) # creat a register for the router
@@ -47,50 +43,47 @@ for json_as in network_intent['AS']: # json_as is a dict
         for json_interface in json_router['interfaces']: # json_interface is a dict
             interface_name = f"{router_name}{json_interface['name']}" #something like 'R1GigabitEthernet1/0'
             interface_instance = classr.interface(json_interface['name'])
-            interface_instance.serve = as_instance.community
             fctr.init_interface(router_instance,interface_instance) # bind to router
             
-            if json_interface['neighbor'] != '':
+            if json_interface['neighbor'] != '' and json_interface['neighbor'] != 'PC':
                 neighbor_id = ((json_interface['neighbor'][1:]+".")*4)[:-1] #all functions use router_id as an index, and they were wrote first so sorry for neighbor.
                 as_instance.link_dict[(router_instance.router_id, interface_instance.name)] = (neighbor_id, json_interface['neighbor_interface'])
             as_instance.eliminate_repeat_link()
-
+            
             reg.add_entry(router_instance.name,interface_instance.name) #add entry to the register of its router
     
+    sh.show_as_link(as_instance)
     # as_instance.auto_loopback()
     as_instance.generate_loopback_plan()
+    sh.show_as_loopback_plan(as_instance)
 
 fctr.as_local_links(as_dict)
 fctr.as_auto_addressing_for_link(as_dict) # from now on, everything is placed so can be tracked by attributes, what is left is to implement the protocols.
 
-fctp.as_config_interfaces(as_dict, reg)
 
-'''
-dont uncomment the function below if you want to use telnet
-'''
-# fctp.as_config_unused_interface_and_loopback0(as_dict, reg)
+
+# '''
+# dont uncomment the function below if you want to use telnet
+# '''
+fctp.as_config_unused_interface_and_loopback0(as_dict, reg)
 
 """implement the protocols"""
-neighbor_info = fctp.generate_eBGP_neighbor_info(as_dict)
+cepelink = fctp.find_CE_PE_link(as_dict)
 try:
-    fctp.as_enable_BGP(as_dict, neighbor_info, reg)
+    fctp.as_enable_BGP(as_dict, cepelink, reg)
 except Exception as e:
     print("Error implementing BGP : ", e)
 
-for As in as_dict.values():
-    # sh.show_as_loopback_plan(As)
-    # sh.show_as_router_address(As)
-    try:
-        if As.igp == "OSPF":
-            fctp.as_enable_ospf(As, reg)
-        elif As.igp == "RIP":
-            fctp.as_enable_rip(As, reg)
-    except Exception as e:
-        print("Error implementing IGP protocols : ", e)
+fctp.as_enable_ospf(as_dict['as1'], reg)
+# for As in as_dict.values():
+#     try:
+#         fctp.as_enable_ospf(As, reg)
+#     except Exception as e:
+#         print("Error implementing IGP protocols : ", e)
 
-"""implement routing policies"""
-fctp.as_config_local_pref(as_dict, neighbor_info, reg)
-
+print(cepelink.values())
+fctp.as_add_vrf(as_dict['as1'], cepelink, reg)
+fctp.as_config_interfaces(as_dict, cepelink, reg)
 """output the configuration files"""
 reg.save_as_cfg()
 reg.display(reg.general_register)
