@@ -61,8 +61,8 @@ def as_auto_addressing_for_link(dict_as):
         numero_link = 0
         for ((r1, i1),(r2, i2)) in As.link_dict.items():
             numero_link += 1
-            s_address =  network + str(numero_link) + ".1/30"
-            b_address =  network + str(numero_link) + ".2/30"
+            s_address =  network + str(numero_link) + ".1"
+            b_address =  network + str(numero_link) + ".2"
             if r1 > r2:
                 addresses = (b_address, s_address)          
             else:

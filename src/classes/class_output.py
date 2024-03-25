@@ -12,7 +12,7 @@ class registrar():
                                        1:[],
                                        2:[],
                                        3:[],
-                                       4:{"in":[],"out":[]},
+                                       4:[],
                                        5:[],
                                        "Loopback0":[]} 
         self.log[name] = {}
@@ -53,7 +53,9 @@ class registrar():
                 
         for (target, file) in files.items():         
             with open(file, "w") as f:
-                self.write_default(f,target,"beginning")
+                # self.write_default(f,target,"beginning")
+                for value in self.general_register[target][1]:
+                    f.write(value + "\n") #vrf at the beginning
                 for key, value in self.general_register[target].items():
                     if type(key) != int : 
                         f.write("interface "+ key + "\n")
@@ -61,7 +63,7 @@ class registrar():
                             f.write(" " + i + "\n")
                         f.write("!\n")
                 for key, value in self.general_register[target].items():
-                    if type(key) == int :
+                    if type(key) == int and key != 1:
                         if isinstance(value, dict):#designed for bgp
                             for second in value.values():
                                 for i in second:
@@ -70,7 +72,7 @@ class registrar():
                             for i in value:
                                 f.write( i + "\n")
                         
-                self.write_default(f,target,"end")
+                # self.write_default(f,target,"end")
         print("files generated successfully at output/")
 
 

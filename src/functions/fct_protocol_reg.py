@@ -10,15 +10,16 @@ whatever the order of calls of the functions.
 def as_enable_ospf(As,reg):
     """Implement OSPF for all routers in the As"""
     process_id = 100
-    order = 1 # TODO check if it is the right order
+    order = 2 # TODO check if it is the right order
     for router in As.routers.values():
         reg.write(router.name, order, "router ospf " + str(process_id))
         reg.write(router.name, order, " router-id " + router.router_id)
         reg.write(router.name, order, " log-adjacency-changes")
-        reg.write(router.name, order, " network " + str(router.loopback) + "0.0.0.0 area 0")
+        reg.write(router.name, order, " network " + str(router.loopback) + " 0.0.0.0 area 0")
         for interface in router.interfaces.values():
             if interface.statu == "up" and interface.egp_protocol_type != "eBGP":
-                reg.write(router.name, order, " network " + str(interface.address_ipv4) + "0.0.0.3 area 0")
+                reg.write(router.name, order, " network " + str(interface.address_ipv4) + " 0.0.0.3 area 0")
+        reg.write(router.name, order, "!")
 #  router ospf 100
 #  router-id 1.1.1.1
 #  log-adjacency-changes
@@ -114,8 +115,8 @@ def as_add_vrf(As, cepelink, reg): #As should only be the core
                     print(router.vrf[ce_type])
                     reg.write(router.name, 1, "ip vrf " + ce_type)
                     reg.write(router.name, 1, " rd " + router.vrf[ce_type])
-                    reg.write(router.name, 1, " route-target export " + router.vrf[ce_type] + ":" + str(1000*len(router.vrf))) # 100:x000 
-                    reg.write(router.name, 1, " route-target import " + router.vrf[ce_type] + ":" + str(1000*len(router.vrf)))
+                    reg.write(router.name, 1, " route-target export " + router.vrf[ce_type] + "0")# 100:x000 
+                    reg.write(router.name, 1, " route-target import " + router.vrf[ce_type] + "0")
                     reg.write(router.name, 1, "!")
 # ip vrf orange
 #  rd 123:1
@@ -124,14 +125,14 @@ def as_add_vrf(As, cepelink, reg): #As should only be the core
 # !         
             print(router.vrf_route_target)
             for vrf in router.vrf_route_target.keys():
-                reg.write(router.name, 3, "address-family ipv4 vrf " + vrf)
+                reg.write(router.name, 4, " address-family ipv4 vrf " + vrf)
                 ce_address, as_id = router.vrf_route_target[vrf]
-                reg.write(router.name, 3, " neighbor " + ce_address + " remote-as " + as_id)
-                reg.write(router.name, 3, " neighbor " + ce_address + " activate")
-                reg.write(router.name, 3, " neighbor " + ce_address + " as-override")
-                reg.write(router.name, 3, " no synchronization")
-                reg.write(router.name, 3, "exit-address-family")
-                reg.write(router.name, 3, "!")
+                reg.write(router.name, 4, "  neighbor " + ce_address + " remote-as " + as_id)
+                reg.write(router.name, 4, "  neighbor " + ce_address + " activate")
+                reg.write(router.name, 4, "  neighbor " + ce_address + " as-override")
+                reg.write(router.name, 4, "  no synchronization")
+                reg.write(router.name, 4, " exit-address-family")
+                reg.write(router.name, 4, " !")
 #   address-family ipv4 vrf sfr
 #   neighbor 10.1.12.2 remote-as 20
 #   neighbor 10.1.12.2 activate
@@ -152,7 +153,7 @@ def as_enable_BGP(dict_as, cepelink, reg):
     """
     Implement BGP for all As
     """
-    order = 2
+    order = 3
     PEs = []
     #TODO for CE
     for As in dict_as.values():
@@ -160,8 +161,9 @@ def as_enable_BGP(dict_as, cepelink, reg):
             if router.type == "PE":
                 PEs.append([router.name, router.router_id])
         
-            elif router.type != "P":
-                reg.write(router.name, order, "router bgp 100")
+            if router.type != "PE" and router.type != "P":
+                print("treading"+router.name)
+                reg.write(router.name, order, "router bgp 200")
                 reg.write(router.name, order, " no synchronization")
                 reg.write(router.name, order, " bgp router-id " + router.router_id)
                 reg.write(router.name, order, " bgp log-neighbor-changes")
@@ -172,6 +174,7 @@ def as_enable_BGP(dict_as, cepelink, reg):
                         reg.write(router.name, order, " neighbor " + pe_address + " remote-as 1") # 1 is the core
                         reg.write(router.name, order, " no auto-summary")
                         reg.write(router.name, order, "!")
+
 # router bgp 20
 #  no synchronization
 #  bgp router-id 22.22.22.22
@@ -180,22 +183,22 @@ def as_enable_BGP(dict_as, cepelink, reg):
 #  network 192.168.200.0
 #  neighbor 10.1.12.1 remote-as 123
 #  no auto-summary
-        for [name,id] in PEs:
-            reg.write(name, order, "router bgp 100") # 100 is the process id
-            reg.write(name, order, "bgp router-id " + id)
-            reg.write(name, order, "no bgp default ipv4-unicast")
-            reg.write(name, order, "bgp log-neighbor-changes")
-            for [_,id] in PEs:
-                if id != router.router_id:
-                    loopback = id # we defined loopback as router_id
-                    reg.write(name, order, "neighbor " + loopback + " remote-as " + str(As.as_id))
-                    reg.write(name, order, "neighbor " + loopback + " update-source Loopback0")
-                    reg.write(name, order, "!")
-                    reg.write(name, order, "address-family vpnv4")
-                    reg.write(name, order, "neighbor " + loopback + " activate")
-                    reg.write(name, order, "neighbor " + loopback + " send-community extended")
-                    reg.write(name, order, "exit-address-family")
-                    reg.write(name, order, "!")
+    for [name,id] in PEs:
+        reg.write(name, order, "router bgp 200") # 100 is the process id
+        reg.write(name, order, " bgp router-id " + id)
+        reg.write(name, order, " no bgp default ipv4-unicast")
+        reg.write(name, order, " bgp log-neighbor-changes")
+        for [_,id] in PEs:
+            if id != router.router_id:
+                loopback = id # we defined loopback as router_id
+                reg.write(name, order, " neighbor " + loopback + " remote-as " + str(As.as_id))
+                reg.write(name, order, " neighbor " + loopback + " update-source Loopback0")
+                reg.write(name, order, " !")
+                reg.write(name, order, " address-family vpnv4")
+                reg.write(name, order, "  neighbor " + loopback + " activate")
+                reg.write(name, order, "  neighbor " + loopback + " send-community extended")
+                reg.write(name, order, " exit-address-family")
+                reg.write(name, order, " !")
             
 #  router bgp 123
 #  bgp router-id 1.1.1.1
@@ -210,7 +213,7 @@ def as_enable_BGP(dict_as, cepelink, reg):
 #  exit-address-family
 #  !            
 
-#TODO
+
 '''
 functions particularly related to complete the configuration
 '''
@@ -218,12 +221,13 @@ def as_config_interfaces(dict_as, cepelink, reg):
     """default config of interfaces of all routers in all As"""
     for As in dict_as.values():
         for router in As.routers.values():
+            reg.write(router.name, "Loopback0", "ip address " + str(router.loopback) + " 255.255.255.255")
             for interface in router.interfaces.values():
                 if interface.statu == "up":
                     if (router.router_id,interface.address_ipv4) in cepelink.keys():
                         (_,vrf,_,_) = cepelink.get((router.router_id,interface.address_ipv4))
                         reg.write(router.name,interface.name,"ip vrf forwarding " + vrf)
-                    reg.write(router.name,interface.name,"ip address "+str(interface.address_ipv4)+ "255.255.255.0")
+                    reg.write(router.name,interface.name,"ip address "+str(interface.address_ipv4)+ " 255.255.255.0")
                     reg.write(router.name,interface.name,"negotiation auto")
                     reg.write(router.name,interface.name,"duplex auto")
                     reg.write(router.name,interface.name,"spped auto")

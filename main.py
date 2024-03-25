@@ -86,4 +86,4 @@ fctp.as_add_vrf(as_dict['as1'], cepelink, reg)
 fctp.as_config_interfaces(as_dict, cepelink, reg)
 """output the configuration files"""
 reg.save_as_cfg()
-reg.display(reg.general_register)
+# reg.display(reg.general_register)
