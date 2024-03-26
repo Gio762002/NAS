@@ -16,14 +16,6 @@ class registrar():
                                        5:[],
                                        "Loopback0":[]} 
         self.log[name] = {}
-        """
-        writing order:
-        # 0 : default
-        # 1 : bgp (but specific inside by caracters)
-        # 2 : ospf/rip
-        # 3 : prefix-list
-        # 4 : route-map
-        """
     
     def add_entry(self, name, entry): #put interface.name or writing order here as entry
         self.general_register[name][entry] = []
@@ -53,7 +45,7 @@ class registrar():
                 
         for (target, file) in files.items():         
             with open(file, "w") as f:
-                # self.write_default(f,target,"beginning")
+                self.write_default(f,target,"beginning")
                 for value in self.general_register[target][1]:
                     f.write(value + "\n") #vrf at the beginning
                 for key, value in self.general_register[target].items():
@@ -72,7 +64,7 @@ class registrar():
                             for i in value:
                                 f.write( i + "\n")
                         
-                # self.write_default(f,target,"end")
+                self.write_default(f,target,"end")
         print("files generated successfully at output/")
 
 
@@ -89,14 +81,12 @@ class registrar():
             "!",
             "boot-start-marker",
             "boot-end-marker",
-            "!",
-            "!",
+            "!","!",
             "no aaa new-model",
             "no ip icmp rate-limit unreachable",
             "ip cef",
             "!","!","!","!",
             "no ip domain lookup",
-            "ipv6 unicast-routing",
             "!",
             "multilink bundle-name authenticated",
             "!","!","!","!","!","!","!","!","!","!","!","!","!","!",
@@ -109,21 +99,34 @@ class registrar():
         ]
 
         default_commands_end=[
-            "!","!","!","!","!","!","!",
+            "ip forward-protocol nd",
+            "no ip http server",
+            "no ip http secure-server",
+            "!","!","!",
+            "logging alarm informational",
+            "no cdp log mismatch duplex",
+            "!","!","!","!","!",
+            "mpls ldp router-id Loopback0",
+            "!",
             "control-plane",
             "!","!","!","!","!","!","!",
-            # "gatekeeper",
-            # " shutdown",
-            # "!","!",
-            # "line con 0",
-            # " exec-timeout 0 0",
-            # " privilege level 15",
-            # " logging synchronous",
-            # " stopbits 1",
-            # "line vty 0 4",
-            # " login",
-            # "!","!",
-            # "end"
+            "gatekeeper",
+            " shutdown",
+            "!","!"
+            "line con 0",
+            " exec-timeout 0 0",
+            " privilege level 15",
+            " logging synchronous",
+            " stopbits 1",
+            "line aux 0",
+            " exec-timeout 0 0",
+            " privilege level 15",
+            " logging synchronous",
+            " stopbits 1",
+            "line vty 0 4",
+            " login",
+            "!","!",
+            "end"
         ] # commented to ensure telnet.py works
         if where == "beginning":
             for command in default_commands_beginning:
