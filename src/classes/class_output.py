@@ -112,7 +112,7 @@ class registrar():
             "!","!","!","!","!","!","!",
             "gatekeeper",
             " shutdown",
-            "!","!"
+            "!","!",
             "line con 0",
             " exec-timeout 0 0",
             " privilege level 15",

@@ -159,11 +159,11 @@ def as_enable_BGP(dict_as, cepelink, reg):
     for As in dict_as.values():
         for router in As.routers.values():
             if router.type == "PE":
-                PEs.append([router.name, router.router_id])
+                PEs.append([router.name, router.router_id, As.as_id])
         
             if router.type != "PE" and router.type != "P":
                 print("treading"+router.name)
-                reg.write(router.name, order, "router bgp 200")
+                reg.write(router.name, order, "router bgp" + As.as_id)
                 reg.write(router.name, order, " no synchronization")
                 reg.write(router.name, order, " bgp router-id " + router.router_id)
                 reg.write(router.name, order, " bgp log-neighbor-changes")
@@ -183,22 +183,24 @@ def as_enable_BGP(dict_as, cepelink, reg):
 #  network 192.168.200.0
 #  neighbor 10.1.12.1 remote-as 123
 #  no auto-summary
-    for [name,id] in PEs:
-        reg.write(name, order, "router bgp 200") # 100 is the process id
-        reg.write(name, order, " bgp router-id " + id)
-        reg.write(name, order, " no bgp default ipv4-unicast")
-        reg.write(name, order, " bgp log-neighbor-changes")
-        for [_,id] in PEs:
-            if id != router.router_id:
-                loopback = id # we defined loopback as router_id
-                reg.write(name, order, " neighbor " + loopback + " remote-as " + str(As.as_id))
-                reg.write(name, order, " neighbor " + loopback + " update-source Loopback0")
-                reg.write(name, order, " !")
-                reg.write(name, order, " address-family vpnv4")
-                reg.write(name, order, "  neighbor " + loopback + " activate")
-                reg.write(name, order, "  neighbor " + loopback + " send-community extended")
-                reg.write(name, order, " exit-address-family")
-                reg.write(name, order, " !")
+    for [name,id,asid] in PEs:
+            reg.write(name, order, "router bgp "+ asid) # 100 is the process id
+            reg.write(name, order, " bgp router-id " + id)
+            reg.write(name, order, " no bgp default ipv4-unicast")
+            reg.write(name, order, " bgp log-neighbor-changes") 
+    for As in dict_as.values():      
+        for router in As.routers.values():
+            for [_,id,asid] in PEs:
+                if id != router.router_id:
+                    loopback = id # we defined loopback as router_id
+                    reg.write(router.name, order, " neighbor " + loopback + " remote-as " + str(As.as_id))
+                    reg.write(router.name, order, " neighbor " + loopback + " update-source Loopback0")
+                    reg.write(router.name, order, " !")
+                    reg.write(router.name, order, " address-family vpnv4")
+                    reg.write(router.name, order, "  neighbor " + loopback + " activate")
+                    reg.write(router.name, order, "  neighbor " + loopback + " send-community extended")
+                    reg.write(router.name, order, " exit-address-family")
+                    reg.write(router.name, order, " !")
             
 #  router bgp 123
 #  bgp router-id 1.1.1.1
@@ -230,7 +232,7 @@ def as_config_interfaces(dict_as, cepelink, reg):
                     reg.write(router.name,interface.name,"ip address "+str(interface.address_ipv4)+ " 255.255.255.0")
                     reg.write(router.name,interface.name,"negotiation auto")
                     reg.write(router.name,interface.name,"duplex auto")
-                    reg.write(router.name,interface.name,"spped auto")
+                    reg.write(router.name,interface.name,"speed auto")
                     reg.write(router.name,interface.name,"media-type gbic")
                     if router.type == "P" or (router.type=="PE" and interface.egp_protocol_type == "eBGP"):
                         reg.write(router.name,interface.name,"mpls ip")
