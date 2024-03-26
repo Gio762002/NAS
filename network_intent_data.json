@@ -7,6 +7,7 @@
                 {
                     "name": "R1",
                     "type": "PE",
+                    "private_network": "",
                     "bgp_preference": 100,
                     "interfaces": [
                         {
@@ -34,6 +35,7 @@
                 {
                     "name": "R2",
                     "type": "P",
+                    "private_network": "",
                     "bgp_preference": 100,
                     "interfaces": [
                         {
@@ -61,6 +63,7 @@
                 {
                     "name": "R3",
                     "type": "P",
+                    "private_network": "",
                     "bgp_preference": 100,
                     "interfaces": [
                         {
@@ -88,6 +91,7 @@
                 {
                     "name": "R4",
                     "type": "PE",
+                    "private_network": "",
                     "bgp_preference": 100,
                     "interfaces": [
                         {
@@ -122,6 +126,7 @@
                 {
                     "name": "R5",
                     "type": "Orange",
+                    "private_network": "192.168.1.0",
                     "bgp_preference": 100,
                     "interfaces": [
                         {
@@ -156,6 +161,7 @@
                 {
                     "name": "R6",
                     "type": "SFR",
+                    "private_network": "192.168.1.0",
                     "bgp_preference": 100,
                     "interfaces": [
                         {
@@ -165,13 +171,13 @@
                         },
                         {
                             "name": "GigabitEthernet1/0",
-                            "neighbor": "R1",
-                            "neighbor_interface": "GigabitEthernet1/0"
+                            "neighbor": "",
+                            "neighbor_interface": ""
                         },
                         {
                             "name": "GigabitEthernet2/0",
-                            "neighbor": "",
-                            "neighbor_interface": ""
+                            "neighbor": "R1",
+                            "neighbor_interface": "GigabitEthernet2/0"
                         },
                         {
                             "name": "GigabitEthernet3/0",
@@ -190,6 +196,7 @@
                 {
                     "name": "R7",
                     "type": "SFR",
+                    "private_network": "192.168.2.0",
                     "bgp_preference": 100,
                     "interfaces": [
                         {
@@ -224,6 +231,7 @@
                 {
                     "name": "R8",
                     "type": "Orange",
+                    "private_network": "192.168.2.0",
                     "bgp_preference": 100,
                     "interfaces": [
                         {
@@ -233,13 +241,13 @@
                         },
                         {
                             "name": "GigabitEthernet1/0",
-                            "neighbor": "R4",
-                            "neighbor_interface": "GigabitEthernet1/0"
+                            "neighbor": "",
+                            "neighbor_interface": ""
                         },
                         {
                             "name": "GigabitEthernet2/0",
-                            "neighbor": "",
-                            "neighbor_interface": ""
+                            "neighbor": "R4",
+                            "neighbor_interface": "GigabitEthernet2/0"
                         },
                         {
                             "name": "GigabitEthernet3/0",

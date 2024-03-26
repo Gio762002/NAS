@@ -33,7 +33,7 @@ for json_as in network_intent['AS']: # json_as is a dict
 
     for json_router in json_as['routers']: # json_router is a dict
         router_name = json_router['name']
-        router_instance = classr.router(router_name, json_router['type'])
+        router_instance = classr.router(router_name, json_router['type'], json_router['private_network'])
         router_instance.get_router_id()
         router_instance.get_loopback()
         fctr.add_router_to_as(router_instance,as_instance) # bind to as
@@ -48,42 +48,35 @@ for json_as in network_intent['AS']: # json_as is a dict
             if json_interface['neighbor'] != '' and json_interface['neighbor'] != 'PC':
                 neighbor_id = ((json_interface['neighbor'][1:]+".")*4)[:-1] #all functions use router_id as an index, and they were wrote first so sorry for neighbor.
                 as_instance.link_dict[(router_instance.router_id, interface_instance.name)] = (neighbor_id, json_interface['neighbor_interface'])
+            if json_interface['neighbor'] == 'PC':
+                interface_instance.statu = "up" 
+                interface_instance.address_ipv4 = json_router['private_network'][:-1] + "1"
             as_instance.eliminate_repeat_link()
-            
             reg.add_entry(router_instance.name,interface_instance.name) #add entry to the register of its router
-    
-    sh.show_as_link(as_instance)
-    # as_instance.auto_loopback()
     as_instance.generate_loopback_plan()
-    sh.show_as_loopback_plan(as_instance)
 
 fctr.as_local_links(as_dict)
 fctr.as_auto_addressing_for_link(as_dict) # from now on, everything is placed so can be tracked by attributes, what is left is to implement the protocols.
 
+# for As in as_dict.values():
+#     sh.show_as_link(As)
+#     sh.show_as_router_address(As)
 
-
-# '''
-# dont uncomment the function below if you want to use telnet
-# '''
 fctp.as_config_unused_interface_and_loopback0(as_dict, reg)
 
 """implement the protocols"""
 cepelink = fctp.find_CE_PE_link(as_dict)
+# for i in cepelink.items():
+#     print(i)
 try:
     fctp.as_enable_BGP(as_dict, cepelink, reg)
 except Exception as e:
     print("Error implementing BGP : ", e)
 
 fctp.as_enable_ospf(as_dict['as1'], reg)
-# for As in as_dict.values():
-#     try:
-#         fctp.as_enable_ospf(As, reg)
-#     except Exception as e:
-#         print("Error implementing IGP protocols : ", e)
 
-print(cepelink.values())
 fctp.as_add_vrf(as_dict['as1'], cepelink, reg)
 fctp.as_config_interfaces(as_dict, cepelink, reg)
 """output the configuration files"""
 reg.save_as_cfg()
-# reg.display(reg.general_register)
+

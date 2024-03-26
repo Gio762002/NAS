@@ -2,12 +2,12 @@
 Clarification : all full names (router/interface) refer to instances, and all abbrev refer to strings 
 certains fcts have parameter : dict_as, which is a dict of all As instances that will be used in the main program
 '''
-#ok
+
 def init_interface(router, interface):
     """bind interface to router, and add a statu tracker in the attribute 'all_interfaces' (dict): { interface.name : 0/1(occupied?) }"""
     router.all_interfaces[interface.name] = 0 # .name is the key
     router.interfaces[interface.name] = interface
-#ok
+
 def add_router_to_as(router, As): 
     """bind router to As, and update router.position to As.as_id, which is a string"""
     As.routers[router.router_id] = router
@@ -17,14 +17,14 @@ def add_router_to_as(router, As):
 '''
 fcts of distribution of addresses
 '''
-#ok
+
 def get_router_instance(router_id, dict_as):
     """get router instance from As instances, when only router_id is known"""
     for As in dict_as.values():
         if router_id in As.routers.keys():
             return As.routers.get(router_id)
     raise Exception("router_id not found")
-#ok
+
 def connect_routers(router1, interface1, router2, interface2):
     """separated from the function below for making the code more readable"""
     router1.all_interfaces[interface1.name] = 1
