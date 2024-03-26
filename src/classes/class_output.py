@@ -19,7 +19,7 @@ class registrar():
     
     def add_entry(self, name, entry): #put interface.name or writing order here as entry
         self.general_register[name][entry] = []
-        self.log[name][entry] = { "route_map_name": None}
+
 
     def write(self, name, entry, command,second=None):
         try:

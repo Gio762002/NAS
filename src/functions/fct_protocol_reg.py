@@ -111,7 +111,7 @@ def as_enable_BGP(dict_as, cepelink, reg):
                 reg.write(router.name, order, " bgp router-id " + router.router_id)
                 reg.write(router.name, order, " bgp log-neighbor-changes")
                 reg.write(router.name, order, " network " + str(router.loopback) + " mask 255.255.255.255")
-                reg.write(router.name, order, " network " + router.private_network + " mask 255.255.255.0")
+                reg.write(router.name, order, " network " + router.private_network)
                 for [(pe_id, pe_address),(ce_id, _, _, _)] in cepelink.items():
                     if ce_id == router.router_id:
                         reg.write(router.name, order, " neighbor " + pe_address + " remote-as 1") # 1 is the core
@@ -174,9 +174,10 @@ def as_config_interfaces(dict_as, cepelink, reg):
                         reg.write(router.name,interface.name,"ip vrf forwarding " + vrf)
                     reg.write(router.name,interface.name,"ip address "+str(interface.address_ipv4)+ " 255.255.255.0")
                     reg.write(router.name,interface.name,"negotiation auto")
-                    reg.write(router.name,interface.name,"duplex auto")
-                    reg.write(router.name,interface.name,"speed auto")
-                    reg.write(router.name,interface.name,"media-type gbic")
+                    if "GigabitEthernet0/0" in interface.name:
+                        reg.write(router.name,interface.name,"duplex auto")
+                        reg.write(router.name,interface.name,"speed auto")
+                        reg.write(router.name,interface.name,"media-type gbic")
                     if router.type == "P" or (router.type=="PE" and interface.egp_protocol_type != "eBGP"):
                         reg.write(router.name,interface.name,"mpls ip")
 
